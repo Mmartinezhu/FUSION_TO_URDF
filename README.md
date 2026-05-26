@@ -78,7 +78,3 @@ Add your own images to show the full workflow:
   </tr>
 </table>
 
-Recommended image names:
-
-- `docs/images/fusion_model.png`
-- `docs/images/web_viewer_model.png`
