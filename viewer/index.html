@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>URDF Viewer</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="side-panel" aria-label="Panel de archivos">
+        <header class="brand-row">
+          <div>
+            <h1>URDF Viewer</h1>
+            <p id="folderName">Sin carpeta</p>
+          </div>
+          <button id="openFolderButton" class="icon-button primary" type="button" title="Abrir carpeta" aria-label="Abrir carpeta">
+            <span data-lucide="folder-open"></span>
+          </button>
+          <input id="folderInput" type="file" webkitdirectory directory multiple hidden />
+        </header>
+
+        <label class="field-label" for="urdfSelect">URDF</label>
+        <select id="urdfSelect" class="select-input" disabled>
+          <option>Selecciona una carpeta</option>
+        </select>
+
+        <section class="metrics" aria-label="Resumen">
+          <div>
+            <span id="linkCount">0</span>
+            <small>links</small>
+          </div>
+          <div>
+            <span id="jointCount">0</span>
+            <small>juntas</small>
+          </div>
+          <div>
+            <span id="meshCount">0</span>
+            <small>mallas</small>
+          </div>
+        </section>
+
+        <section class="control-stack" aria-label="Controles">
+          <label class="toggle-row">
+            <input id="meshToggle" type="checkbox" checked />
+            <span>Mallas</span>
+          </label>
+          <label class="toggle-row">
+            <input id="wireToggle" type="checkbox" />
+            <span>Alambre</span>
+          </label>
+          <label class="toggle-row">
+            <input id="gridToggle" type="checkbox" checked />
+            <span>Grilla</span>
+          </label>
+          <label class="toggle-row">
+            <input id="axesToggle" type="checkbox" checked />
+            <span>Ejes</span>
+          </label>
+        </section>
+
+        <div class="button-row">
+          <button id="fitButton" class="text-button" type="button">
+            <span data-lucide="scan"></span>
+            <span>Recentrar</span>
+          </button>
+          <button id="clearButton" class="text-button subtle" type="button">
+            <span data-lucide="trash-2"></span>
+            <span>Limpiar</span>
+          </button>
+        </div>
+
+        <section class="status-panel" aria-live="polite">
+          <strong>Estado</strong>
+          <p id="statusText">Listo para cargar una carpeta.</p>
+          <ul id="issueList"></ul>
+        </section>
+      </aside>
+
+      <section class="viewport-wrap" aria-label="Vista 3D">
+        <div class="top-bar">
+          <span id="robotName">Sin modelo</span>
+          <span id="activeFile">Sin archivo</span>
+        </div>
+        <canvas id="viewerCanvas"></canvas>
+      </section>
+    </main>
+
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script type="module" src="./viewer.js"></script>
+  </body>
+</html>
