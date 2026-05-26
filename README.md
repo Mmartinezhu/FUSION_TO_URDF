@@ -65,7 +65,9 @@ Add your own images to show the full workflow:
 
 | Fusion 360 Model | Web Viewer Result |
 | --- | --- |
-| ![Fusion 360 model](docs/images/fusion_model.png) | ![URDF model in web viewer](docs/images/web_viewer_model.png) |
+| <img width="488" height="600" alt="image" src="https://github.com/user-attachments/assets/ca1be64f-1265-4dc1-99b4-957b7fc05779" />
+ | <img width="1893" height="887" alt="image" src="https://github.com/user-attachments/assets/6a3f05cb-4d82-4ef1-a4b8-3c579e5e6e19" />
+|
 
 Recommended image names:
 
