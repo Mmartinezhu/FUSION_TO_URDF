@@ -70,7 +70,7 @@ Add your own images to show the full workflow:
   </tr>
   <tr>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/ca1be64f-1265-4dc1-99b4-957b7fc05779" alt="Fusion 360 model" width="360">
+      <img src="https://github.com/user-attachments/assets/ca1be64f-1265-4dc1-99b4-957b7fc05779" alt="Fusion 360 model" width="300">
     </td>
     <td align="center">
       <img src="https://github.com/user-attachments/assets/6a3f05cb-4d82-4ef1-a4b8-3c579e5e6e19" alt="URDF model in web viewer" width="360">
