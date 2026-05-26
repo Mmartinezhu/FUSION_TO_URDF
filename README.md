@@ -63,11 +63,20 @@ Select the complete generated package folder, for example `<robot>_description`.
 
 Add your own images to show the full workflow:
 
-| Fusion 360 Model | Web Viewer Result |
-| --- | --- |
-| <img width="488" height="600" alt="image" src="https://github.com/user-attachments/assets/ca1be64f-1265-4dc1-99b4-957b7fc05779" />
- | <img width="1893" height="887" alt="image" src="https://github.com/user-attachments/assets/6a3f05cb-4d82-4ef1-a4b8-3c579e5e6e19" />
-|
+<table>
+  <tr>
+    <th>Fusion 360 Model</th>
+    <th>Web Viewer Result</th>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/ca1be64f-1265-4dc1-99b4-957b7fc05779" alt="Fusion 360 model" width="360">
+    </td>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/6a3f05cb-4d82-4ef1-a4b8-3c579e5e6e19" alt="URDF model in web viewer" width="360">
+    </td>
+  </tr>
+</table>
 
 Recommended image names:
 
