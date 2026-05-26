@@ -58,3 +58,16 @@ http://localhost:8000
 ```
 
 Select the complete generated package folder, for example `<robot>_description`.
+
+## Example
+
+Add your own images to show the full workflow:
+
+| Fusion 360 Model | Web Viewer Result |
+| --- | --- |
+| ![Fusion 360 model](docs/images/fusion_model.png) | ![URDF model in web viewer](docs/images/web_viewer_model.png) |
+
+Recommended image names:
+
+- `docs/images/fusion_model.png`
+- `docs/images/web_viewer_model.png`
