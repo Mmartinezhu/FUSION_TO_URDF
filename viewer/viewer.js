@@ -18,6 +18,8 @@ const meshToggle = document.getElementById('meshToggle');
 const wireToggle = document.getElementById('wireToggle');
 const gridToggle = document.getElementById('gridToggle');
 const axesToggle = document.getElementById('axesToggle');
+const jointList = document.getElementById('jointList');
+const resetJointsButton = document.getElementById('resetJointsButton');
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -46,6 +48,7 @@ scene.add(fillLight);
 let indexedFiles = new Map();
 let urdfOptions = [];
 let meshObjects = [];
+let jointControls = [];
 let currentIssues = [];
 let currentPackageRoot = '';
 
@@ -74,8 +77,9 @@ function resetMetrics() {
   linkCount.textContent = '0';
   jointCount.textContent = '0';
   meshCount.textContent = '0';
-  robotName.textContent = 'Sin modelo';
-  activeFile.textContent = 'Sin archivo';
+  robotName.textContent = 'No model';
+  activeFile.textContent = 'No file';
+  renderJointControls();
 }
 
 function normalizePath(path) {
@@ -137,7 +141,7 @@ function populateUrdfSelect() {
 
   if (urdfOptions.length === 0) {
     const option = document.createElement('option');
-    option.textContent = 'No se encontro URDF';
+    option.textContent = 'No URDF found';
     urdfSelect.appendChild(option);
     return;
   }
@@ -160,6 +164,7 @@ function clearRobot() {
     }
   }
   meshObjects = [];
+  jointControls = [];
   robotRoot.clear();
   resetMetrics();
 }
@@ -184,6 +189,49 @@ function parseOrigin(element) {
     xyz: parseVector(origin?.getAttribute('xyz'), [0, 0, 0]),
     rpy: parseVector(origin?.getAttribute('rpy'), [0, 0, 0])
   };
+}
+
+function parseJointLimits(jointElement, type) {
+  const limit = firstDirectChild(jointElement, 'limit');
+  const lowerAttr = Number(limit?.getAttribute('lower'));
+  const upperAttr = Number(limit?.getAttribute('upper'));
+  const lower = Number.isFinite(lowerAttr) ? lowerAttr : null;
+  const upper = Number.isFinite(upperAttr) ? upperAttr : null;
+
+  if (type === 'continuous') {
+    return { lower: -Math.PI, upper: Math.PI, step: 0.01, unit: 'rad' };
+  }
+
+  if (type === 'revolute') {
+    return {
+      lower: lower ?? -Math.PI,
+      upper: upper ?? Math.PI,
+      step: 0.01,
+      unit: 'rad'
+    };
+  }
+
+  if (type === 'prismatic') {
+    return {
+      lower: lower ?? -0.1,
+      upper: upper ?? 0.1,
+      step: 0.001,
+      unit: 'm'
+    };
+  }
+
+  return { lower: 0, upper: 0, step: 0.01, unit: '' };
+}
+
+function normalizeLimits(limits) {
+  if (limits.lower > limits.upper) {
+    return { ...limits, lower: limits.upper, upper: limits.lower };
+  }
+  if (limits.lower === limits.upper) {
+    const padding = limits.unit === 'm' ? 0.01 : 0.1;
+    return { ...limits, lower: limits.lower - padding, upper: limits.upper + padding };
+  }
+  return limits;
 }
 
 function applyOrigin(object, origin) {
@@ -212,7 +260,7 @@ function parseUrdfDocument(text) {
     throw new Error(parserError.textContent.trim().split('\n')[0]);
   }
   if (doc.documentElement.localName !== 'robot') {
-    throw new Error('El XML no contiene un elemento robot.');
+    throw new Error('The XML does not contain a robot element.');
   }
   return doc;
 }
@@ -247,8 +295,18 @@ function collectRobotData(doc) {
     const parent = firstDirectChild(joint, 'parent')?.getAttribute('link');
     const child = firstDirectChild(joint, 'child')?.getAttribute('link');
     const name = joint.getAttribute('name') || `${parent || 'link'}_${child || 'link'}`;
+    const type = joint.getAttribute('type') || 'fixed';
+    const axis = parseVector(firstDirectChild(joint, 'axis')?.getAttribute('xyz'), [1, 0, 0]);
     if (!parent || !child) continue;
-    joints.push({ name, parent, child, origin: parseOrigin(joint), type: joint.getAttribute('type') || 'fixed' });
+    joints.push({
+      name,
+      parent,
+      child,
+      origin: parseOrigin(joint),
+      type,
+      axis,
+      limits: normalizeLimits(parseJointLimits(joint, type))
+    });
     if (links.has(parent)) {
       links.get(parent).joints.push(joints[joints.length - 1]);
     }
@@ -337,7 +395,7 @@ async function loadVisualMesh(visual, linkName, issues) {
     const filename = meshElement.getAttribute('filename');
     const meshFile = resolveMeshFile(filename);
     if (!meshFile) {
-      issues.push(`No encontre la malla de ${linkName}: ${filename}`);
+      issues.push(`Mesh not found for ${linkName}: ${filename}`);
       material.dispose();
       return visualGroup;
     }
@@ -350,7 +408,7 @@ async function loadVisualMesh(visual, linkName, issues) {
 
   if (!geometry) {
     material.dispose();
-    issues.push(`Visual sin geometria soportada en ${linkName}`);
+    issues.push(`Unsupported visual geometry in ${linkName}`);
     return visualGroup;
   }
 
@@ -424,13 +482,137 @@ function parseAsciiStl(text) {
   }
 
   if (vertices.length === 0) {
-    throw new Error('STL ASCII sin vertices.');
+    throw new Error('ASCII STL has no vertices.');
   }
 
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
   geometry.computeVertexNormals();
   return geometry;
+}
+
+function isMovableJoint(joint) {
+  return joint.type === 'revolute' || joint.type === 'continuous' || joint.type === 'prismatic';
+}
+
+function createJointControl(joint, object) {
+  const basePosition = object.position.clone();
+  const baseQuaternion = object.quaternion.clone();
+  const axis = new THREE.Vector3(joint.axis[0], joint.axis[1], joint.axis[2]);
+  if (axis.lengthSq() < 1e-10) {
+    axis.set(1, 0, 0);
+  }
+  axis.normalize();
+
+  const control = {
+    joint,
+    object,
+    basePosition,
+    baseQuaternion,
+    axis,
+    value: 0
+  };
+  jointControls.push(control);
+  return control;
+}
+
+function setJointValue(control, value) {
+  const clamped = Math.max(control.joint.limits.lower, Math.min(control.joint.limits.upper, Number(value) || 0));
+  control.value = clamped;
+
+  if (control.joint.type === 'prismatic') {
+    const offset = control.axis.clone().multiplyScalar(clamped).applyQuaternion(control.baseQuaternion);
+    control.object.position.copy(control.basePosition).add(offset);
+    control.object.quaternion.copy(control.baseQuaternion);
+    return;
+  }
+
+  const jointRotation = new THREE.Quaternion().setFromAxisAngle(control.axis, clamped);
+  control.object.position.copy(control.basePosition);
+  control.object.quaternion.copy(control.baseQuaternion).multiply(jointRotation);
+}
+
+function formatJointValue(control) {
+  if (control.joint.limits.unit === 'rad') {
+    const degrees = THREE.MathUtils.radToDeg(control.value);
+    return `${control.value.toFixed(2)} rad / ${degrees.toFixed(0)} deg`;
+  }
+  if (control.joint.limits.unit === 'm') {
+    return `${control.value.toFixed(3)} m`;
+  }
+  return control.value.toFixed(2);
+}
+
+function renderJointControls() {
+  if (!jointList) return;
+  jointList.replaceChildren();
+
+  if (jointControls.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'empty-state';
+    empty.textContent = 'No movable joints in this model.';
+    jointList.appendChild(empty);
+    return;
+  }
+
+  for (const control of jointControls) {
+    const card = document.createElement('article');
+    card.className = 'joint-card';
+
+    const title = document.createElement('div');
+    title.className = 'joint-title';
+    const name = document.createElement('strong');
+    name.textContent = control.joint.name;
+    const type = document.createElement('span');
+    type.textContent = control.joint.type;
+    title.append(name, type);
+
+    const controls = document.createElement('div');
+    controls.className = 'joint-controls';
+
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = String(control.joint.limits.lower);
+    slider.max = String(control.joint.limits.upper);
+    slider.step = String(control.joint.limits.step);
+    slider.value = '0';
+
+    const number = document.createElement('input');
+    number.type = 'number';
+    number.min = slider.min;
+    number.max = slider.max;
+    number.step = slider.step;
+    number.value = '0';
+
+    const meta = document.createElement('div');
+    meta.className = 'joint-meta';
+    const range = document.createElement('span');
+    range.textContent = `${control.joint.limits.lower.toFixed(2)} a ${control.joint.limits.upper.toFixed(2)} ${control.joint.limits.unit}`;
+    const value = document.createElement('span');
+    value.textContent = formatJointValue(control);
+    meta.append(range, value);
+
+    const syncValue = (rawValue) => {
+      setJointValue(control, Number(rawValue));
+      slider.value = String(control.value);
+      number.value = String(Number(control.value.toFixed(4)));
+      value.textContent = formatJointValue(control);
+    };
+
+    slider.addEventListener('input', () => syncValue(slider.value));
+    number.addEventListener('input', () => syncValue(number.value));
+
+    controls.append(slider, number);
+    card.append(title, controls, meta);
+    jointList.appendChild(card);
+  }
+}
+
+function resetJointValues() {
+  for (const control of jointControls) {
+    setJointValue(control, 0);
+  }
+  renderJointControls();
 }
 
 async function buildRobot(data) {
@@ -474,6 +656,9 @@ async function buildRobot(data) {
       const childGroup = ensureGroup(joint.child);
       applyOrigin(childGroup, joint.origin);
       linkGroup.add(childGroup);
+      if (isMovableJoint(joint)) {
+        createJointControl(joint, childGroup);
+      }
       attachTree(joint.child, childGroup);
     }
   }
@@ -493,12 +678,13 @@ async function buildRobot(data) {
   jointCount.textContent = String(data.joints.length);
   meshCount.textContent = String(meshObjects.length);
   robotName.textContent = data.name;
+  renderJointControls();
   applyVisibilityState();
   fitCameraToRobot();
 
   const message = issues.length
-    ? `Modelo cargado con ${issues.length} aviso(s).`
-    : 'Modelo cargado.';
+    ? `Model loaded with ${issues.length} warning(s). ${jointControls.length} movable joint(s).`
+    : `Model loaded. ${jointControls.length} movable joint(s).`;
   setStatus(message, issues);
 }
 
@@ -507,16 +693,16 @@ async function loadSelectedUrdf() {
   const selected = urdfOptions.find((option) => option.path === selectedPath);
   if (!selected) return;
 
-  setStatus('Cargando modelo...');
+  setStatus('Loading model...');
   try {
     const text = await selected.file.text();
     const doc = parseUrdfDocument(text);
     const data = collectRobotData(doc);
-    activeFile.textContent = selected.path;
     await buildRobot(data);
+    activeFile.textContent = selected.path;
   } catch (error) {
     clearRobot();
-    setStatus('No pude cargar el URDF.', [error.message]);
+    setStatus('Could not load URDF.', [error.message]);
   }
 }
 
@@ -633,19 +819,19 @@ folderInput.addEventListener('change', async () => {
   clearRobot();
 
   if (files.length === 0) {
-    folderName.textContent = 'Sin carpeta';
-    setStatus('Listo para cargar una carpeta.');
+    folderName.textContent = 'No folder';
+    setStatus('Ready to load a folder.');
     populateUrdfSelect();
     return;
   }
 
   indexFolderFiles(files);
-  folderName.textContent = currentPackageRoot || 'Carpeta seleccionada';
+  folderName.textContent = currentPackageRoot || 'Selected folder';
   populateUrdfSelect();
 
   if (urdfOptions.length === 0) {
-    setStatus('No encontre archivos .urdf o .xacro en la carpeta.', [
-      'Selecciona la carpeta completa del paquete, no solo urdf/ o meshes/.'
+    setStatus('No .urdf or .xacro files were found in the folder.', [
+      'Select the complete package folder, not only urdf/ or meshes/.'
     ]);
     return;
   }
@@ -655,9 +841,10 @@ folderInput.addEventListener('change', async () => {
 
 urdfSelect.addEventListener('change', loadSelectedUrdf);
 fitButton.addEventListener('click', fitCameraToRobot);
+resetJointsButton.addEventListener('click', resetJointValues);
 clearButton.addEventListener('click', () => {
   clearRobot();
-  setStatus('Vista limpia.');
+  setStatus('View cleared.');
 });
 
 for (const toggle of [meshToggle, wireToggle, gridToggle, axesToggle]) {

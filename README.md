@@ -27,6 +27,7 @@ ros2 launch <robot>_description display.launch.py
 ## Web Viewer
 
 This repo also includes a local web viewer for generated URDF packages.
+The viewer can load the exported meshes and move `revolute`, `continuous`, and `prismatic` joints with sliders.
 
 On Windows:
 

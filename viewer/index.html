@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,13 +8,13 @@
   </head>
   <body>
     <main class="app-shell">
-      <aside class="side-panel" aria-label="Panel de archivos">
+      <aside class="side-panel" aria-label="File panel">
         <header class="brand-row">
           <div>
             <h1>URDF Viewer</h1>
-            <p id="folderName">Sin carpeta</p>
+            <p id="folderName">No folder</p>
           </div>
-          <button id="openFolderButton" class="icon-button primary" type="button" title="Abrir carpeta" aria-label="Abrir carpeta">
+          <button id="openFolderButton" class="icon-button primary" type="button" title="Open folder" aria-label="Open folder">
             <span data-lucide="folder-open"></span>
           </button>
           <input id="folderInput" type="file" webkitdirectory directory multiple hidden />
@@ -22,65 +22,78 @@
 
         <label class="field-label" for="urdfSelect">URDF</label>
         <select id="urdfSelect" class="select-input" disabled>
-          <option>Selecciona una carpeta</option>
+          <option>Select a folder</option>
         </select>
 
-        <section class="metrics" aria-label="Resumen">
+        <section class="metrics" aria-label="Summary">
           <div>
             <span id="linkCount">0</span>
             <small>links</small>
           </div>
           <div>
             <span id="jointCount">0</span>
-            <small>juntas</small>
+            <small>joints</small>
           </div>
           <div>
             <span id="meshCount">0</span>
-            <small>mallas</small>
+            <small>meshes</small>
           </div>
         </section>
 
-        <section class="control-stack" aria-label="Controles">
+        <section class="control-stack" aria-label="Display controls">
           <label class="toggle-row">
             <input id="meshToggle" type="checkbox" checked />
-            <span>Mallas</span>
+            <span>Meshes</span>
           </label>
           <label class="toggle-row">
             <input id="wireToggle" type="checkbox" />
-            <span>Alambre</span>
+            <span>Wireframe</span>
           </label>
           <label class="toggle-row">
             <input id="gridToggle" type="checkbox" checked />
-            <span>Grilla</span>
+            <span>Grid</span>
           </label>
           <label class="toggle-row">
             <input id="axesToggle" type="checkbox" checked />
-            <span>Ejes</span>
+            <span>Axes</span>
           </label>
         </section>
 
         <div class="button-row">
           <button id="fitButton" class="text-button" type="button">
             <span data-lucide="scan"></span>
-            <span>Recentrar</span>
+            <span>Fit</span>
           </button>
           <button id="clearButton" class="text-button subtle" type="button">
             <span data-lucide="trash-2"></span>
-            <span>Limpiar</span>
+            <span>Clear</span>
           </button>
         </div>
 
+        <section class="joint-panel" aria-label="Movable joints">
+          <header class="panel-heading">
+            <strong>Joints</strong>
+            <button id="resetJointsButton" class="mini-button" type="button">
+              <span data-lucide="rotate-ccw"></span>
+              <span>Reset</span>
+            </button>
+          </header>
+          <div id="jointList" class="joint-list">
+            <p class="empty-state">Load a model to inspect joints.</p>
+          </div>
+        </section>
+
         <section class="status-panel" aria-live="polite">
-          <strong>Estado</strong>
-          <p id="statusText">Listo para cargar una carpeta.</p>
+          <strong>Status</strong>
+          <p id="statusText">Ready to load a folder.</p>
           <ul id="issueList"></ul>
         </section>
       </aside>
 
-      <section class="viewport-wrap" aria-label="Vista 3D">
+      <section class="viewport-wrap" aria-label="3D view">
         <div class="top-bar">
-          <span id="robotName">Sin modelo</span>
-          <span id="activeFile">Sin archivo</span>
+          <span id="robotName">No model</span>
+          <span id="activeFile">No file</span>
         </div>
         <canvas id="viewerCanvas"></canvas>
       </section>

@@ -1,16 +1,17 @@
 # URDF Viewer
 
-Visor web local para paquetes exportados por este script.
+Local web viewer for packages exported by this script.
 
-1. En Windows, ejecuta `start_viewer.bat`.
-2. Abre `http://localhost:8000` en Chrome o Edge.
-3. Pulsa el boton de carpeta.
-4. Selecciona la carpeta completa del paquete generado, por ejemplo `mi_robot_description`.
+1. On Windows, run `start_viewer.bat`.
+2. Open `http://localhost:8000` in Chrome or Edge.
+3. Press the folder button.
+4. Select the complete generated package folder, for example `my_robot_description`.
 
-El visor lee `urdf/*.urdf` o `urdf/*.xacro`, resuelve mallas `package://.../meshes/*.stl` dentro de la carpeta seleccionada y muestra el robot en 3D.
+The viewer reads `urdf/*.urdf` or `urdf/*.xacro`, resolves `package://.../meshes/*.stl` meshes inside the selected folder, and displays the robot in 3D.
 
-Notas:
-- El archivo `.urdf` puro es la ruta recomendada.
-- No abras `index.html` directamente con `file://`; Chrome/Edge bloquean los modulos JavaScript locales por CORS.
-- El visor usa Three.js y Lucide desde CDN, asi que necesita conexion a internet al abrirlo.
-- No ejecuta ROS ni Gazebo; solo visualiza geometria, links y juntas fijas segun el URDF.
+Notes:
+- The pure `.urdf` file is the recommended path.
+- `revolute`, `continuous`, and `prismatic` joints appear as sliders for motion testing.
+- Do not open `index.html` directly with `file://`; Chrome/Edge block local JavaScript modules because of CORS.
+- The viewer uses Three.js and Lucide from CDNs, so it needs an internet connection when opened.
+- It does not run ROS or Gazebo; it only visualizes geometry and applies URDF joint transforms.
