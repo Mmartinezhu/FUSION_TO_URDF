@@ -60,8 +60,7 @@ http://localhost:8000
 Select the complete generated package folder, for example `<robot>_description`.
 
 ## Example
-
-Add your own images to show the full workflow:
+A robot arm:
 
 <table>
   <tr>
