@@ -50,7 +50,9 @@ On Windows:
 ```bat
 viewer\start_viewer.bat
 ```
-
+or 
+```python -m http.server 8000
+```
 Then open:
 
 ```text
