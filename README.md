@@ -50,7 +50,7 @@ On Windows:
 ```bat
 viewer\start_viewer.bat
 ```
-or 
+or in viewer file
 ```bat
 python -m http.server 8000
 ```
