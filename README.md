@@ -51,7 +51,8 @@ On Windows:
 viewer\start_viewer.bat
 ```
 or 
-```python -m http.server 8000
+```bat
+python -m http.server 8000
 ```
 Then open:
 
